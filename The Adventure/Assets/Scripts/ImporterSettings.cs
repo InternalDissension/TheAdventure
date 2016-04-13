@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿/*using UnityEngine;
 using UnityEditor;
 
 public class TexturePostProcessor : AssetPostprocessor
@@ -27,3 +27,4 @@ public class TexturePostProcessor : AssetPostprocessor
         }
     }
 }
+*/

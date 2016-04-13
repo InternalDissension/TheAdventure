@@ -24,5 +24,8 @@ public class Camera_Class : MonoBehaviour {
         Vector3 target = new Vector3(player.position.x + xOffset, player.position.y + yOffset, -zoom);
         transform.position = Vector3.SmoothDamp(transform.position, target, ref velocity, dampTime);
 
+        zoom -= Input.GetAxis("Mouse ScrollWheel") * 3;
+        yOffset += Input.GetAxis("Vertical") * 1;
+
     }
 }
