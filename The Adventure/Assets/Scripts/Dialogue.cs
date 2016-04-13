@@ -3,36 +3,43 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class Dialogue : MonoBehaviour {
+public class Dialogue : MonoBehaviour
+{
 
     public Text dialogueBox;        //dialogue text box
     public Canvas dialogue_UI;      //dialogue ui canvas object
     public Transform dialogue_obj;  //object containing dialogue
     public TextMesh worldText;      //text we want displayed in the world
 
-    public string firstgreeting;
-    public string greeting;
-    public string topic1;
-    public string topic2;
+    public List<string> greeting;
+
+    public string topicGreeting;
+    public List<string> topics;
+
+    public float worddelay = 0.1f;
+    public bool hasTopics;          //Does the npc say anything past greeting
 
     private int talkCount;          //how many times dialogue has been activated
     private int greetingNum;        //which greeting will be used
 
     bool dialogue_possible;
     bool response;                  //has the player responded
+    bool proceed;                   //Let the dialogue handler know when to proceed
 
     public Movement player;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start()
+    {
         dialogueBox.text = "";
         dialogue_UI.enabled = false;
         response = false;
         worldText.text = "";
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
 
         if (dialogue_possible)
         {
@@ -40,22 +47,11 @@ public class Dialogue : MonoBehaviour {
             {
                 player.movement = false;
                 dialogue_UI.enabled = true;
-
-                StartCoroutine(dialogue_Waiter());
-
-                if (!string.IsNullOrEmpty(topic1))
-                {
-                    dialogueBox.text = topic1;
-                }
-
-                if (!string.IsNullOrEmpty(topic2))
-                {
-                    dialogueBox.text += "\n" + topic2;
-                }
+                StartCoroutine(dialogHandle());
             }
         }
-	
-	}
+
+    }
 
     void toggleWorldText()
     {
@@ -80,30 +76,84 @@ public class Dialogue : MonoBehaviour {
         dialogue_possible = false;
         worldText.text = "";
     }
-    
-    IEnumerator dialogue_Waiter()
+
+    IEnumerator dialogHandle()
     {
-        while (dialogue_possible == false)
-        {
-            yield return null;
-        }
         dialogue_possible = false;
 
         toggleWorldText();
 
         if (talkCount > 0)
         {
-            dialogueBox.text = greeting;
+            StartCoroutine(dialogDisplay(greeting[1]));
         }
 
         else
         {
-            dialogueBox.text = firstgreeting;
+            StartCoroutine(dialogDisplay(greeting[0]));
         }
 
-        talkCount++;
+        proceed = false;
+        while (!Input.GetMouseButton(0) || !proceed)
+        {
+            yield return new WaitForFixedUpdate();
+        }
 
+        if (!hasTopics)
+        {
+            yield return new WaitForSeconds(0.5f);
+            player.movement = true;
+            dialogue_UI.enabled = false;
+            dialogue_possible = true;
+            StopCoroutine(dialogHandle());
+        }
 
+        else
+        {
+
+            dialogueBox.text = "";
+            StartCoroutine(dialogDisplay(topicGreeting));
+
+            proceed = false;
+            while(!proceed)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+            
+            for (int i = 0; i < topics.Count; i++)
+            {
+                Debug.Log("topic");
+                StartCoroutine(dialogDisplay("\n" + topics[i]));
+
+                proceed = false;
+                while (!proceed)
+                {
+                    yield return new WaitForFixedUpdate();
+                }
+            }
+        }
+
+            talkCount++;
+    }
+
+    IEnumerator dialogDisplay(string text)
+    {
+        Debug.Log(text);
+        for (int i = 0; i < text.Length; i++)
+        {
+            dialogueBox.text += text[i];
+
+            if (i > text.Length / 4)
+                if (Input.GetMouseButton(0))
+                {
+                    dialogueBox.text = text;
+                    break;
+                }
+            yield return new WaitForSeconds(worddelay);
+        }
+
+        yield return new WaitForSeconds(0.5f);
+        proceed = true;
     }
 
 }

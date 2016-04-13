@@ -8,6 +8,9 @@ public class Movement : MonoBehaviour {
     public float jumpHeight;            //height of jump
     public float jumpTime;              //length of time jump takes to complete
     public float gravity;               //gravity influence
+    public float startupseed;
+    public float falloffspeed;
+    public float dampTime = 0.15f;
 
     public float speedeffect;           //power of super speed
     public float sloweffect;            //power of time control
@@ -38,6 +41,9 @@ public class Movement : MonoBehaviour {
     bool teleportcool;  //teleport cooldown
 
     Animator anim;
+    public Item sword;
+
+    Vector3 moveVec;
 
     // Use this for initialization
     void Start () {
@@ -45,7 +51,6 @@ public class Movement : MonoBehaviour {
         grounded = false;    //player starts grounded
         jumping = false;    //player isn't jumping
         anim = GetComponentInChildren<Animator>();
-        transform.rotation = Quaternion.Euler(Vector3.zero);
 
     }
 
@@ -54,8 +59,10 @@ public class Movement : MonoBehaviour {
     {
         float move = speed * Time.deltaTime;            //Movement over time rather than frames
 
+        Vector3 reference = Vector3.zero;
+
         if (movement)
-        { 
+        {
             jump = Input.GetKeyDown(KeyCode.W);             //Is jump key being pressed
             crouch = Input.GetKey(KeyCode.S);               //Is crouch key being pressed
             forward = Input.GetKey(KeyCode.D);              //Is forward key being pressed
@@ -66,16 +73,36 @@ public class Movement : MonoBehaviour {
             attacking = Input.GetMouseButton(0);
         }
 
-		if (forward)
-		{
+        if (forward)
+        {
+            //currentspeed = Mathf.Clamp(currentspeed + startupseed, 0, speed);
+            moveVec = transform.position + (Vector3.right * speed);
             transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, 0, transform.rotation.eulerAngles.z);
-            //transform.Translate(Vector3.right * move);
-		}
+            transform.position = Vector3.SmoothDamp(transform.position, moveVec, ref reference, dampTime);
+        }
 
         else if (backward)
         {
             transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, 180, transform.rotation.eulerAngles.z);
+            moveVec = transform.position + (Vector3.left * speed);
+            transform.position = Vector3.SmoothDamp(transform.position, moveVec, ref reference, dampTime);
         }
+
+        else
+        {
+            moveVec = transform.position;
+        }
+
+        if (attacking)
+        {
+            sword.attacking = true;
+        }
+
+        else
+        {
+            sword.attacking = false;
+        }
+
 
         SetBoolAnimation("running", backward || forward);
         SetBoolAnimation("attacking", attacking);
