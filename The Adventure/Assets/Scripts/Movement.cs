@@ -43,6 +43,7 @@ public class Movement : MonoBehaviour {
     Animator anim;
     public Item sword;
 
+    CharacterController controller;
     Vector3 moveVec;
 
     // Use this for initialization
@@ -51,6 +52,7 @@ public class Movement : MonoBehaviour {
         grounded = false;    //player starts grounded
         jumping = false;    //player isn't jumping
         anim = GetComponentInChildren<Animator>();
+        controller = GetComponent<CharacterController>();
 
     }
 
@@ -76,9 +78,9 @@ public class Movement : MonoBehaviour {
         if (forward)
         {
             //currentspeed = Mathf.Clamp(currentspeed + startupseed, 0, speed);
-            moveVec = transform.position + (Vector3.right * speed);
+            moveVec = (Vector3.right * move);
             transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, 0, transform.rotation.eulerAngles.z);
-            transform.position = Vector3.SmoothDamp(transform.position, moveVec, ref reference, dampTime);
+            transform.Translate(moveVec);
         }
 
         else if (backward)

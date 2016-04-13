@@ -53,20 +53,10 @@ public class Dialogue : MonoBehaviour
 
     }
 
-    void toggleWorldText()
-    {
-        if (worldText.text == "")
-            worldText.text = "Press E to talk";
-
-        else
-            worldText.text = "";
-    }
-
     void OnTriggerEnter()
     {
-        Debug.Log("Press E to talk");
         dialogue_possible = true;
-        toggleWorldText();
+        worldText.text = "Press E to talk";
     }
 
     void OnTriggerExit()
@@ -81,7 +71,7 @@ public class Dialogue : MonoBehaviour
     {
         dialogue_possible = false;
 
-        toggleWorldText();
+        worldText.text = "";
 
         if (talkCount > 0)
         {
@@ -133,7 +123,8 @@ public class Dialogue : MonoBehaviour
             }
         }
 
-            talkCount++;
+        talkCount++;
+        worldText.text = "Press E to talk";
     }
 
     IEnumerator dialogDisplay(string text)
