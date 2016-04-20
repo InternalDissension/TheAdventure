@@ -10,22 +10,25 @@ public class Camera_Class : MonoBehaviour {
     public float dampTime = 0.15f;
     public float zoom;
 
+    public Movement m;
+
     private Vector3 velocity;
 	// Use this for initialization
 	void Start () {
 
-
-
-	}
-	
-	// Update is called once per frame
-	void Update () {
-
-        Vector3 target = new Vector3(player.position.x + xOffset, player.position.y + yOffset, -zoom);
+        Vector3 target = new Vector3(m.startingPosition.x + xOffset, m.startingPosition.y + yOffset, -zoom);
         transform.position = Vector3.SmoothDamp(transform.position, target, ref velocity, dampTime);
 
-        zoom -= Input.GetAxis("Mouse ScrollWheel") * 3;
-        yOffset += Input.GetAxis("Vertical") * 1;
+    }
+	
+	// Update is called once per frame
+	void FixedUpdate () {
+
+        if (m.inscene)
+        {
+            Vector3 target = new Vector3(player.position.x + xOffset, player.position.y + yOffset, -zoom);
+            transform.position = Vector3.SmoothDamp(transform.position, target, ref velocity, dampTime);
+        }
 
     }
 }

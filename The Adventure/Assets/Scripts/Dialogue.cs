@@ -45,8 +45,6 @@ public class Dialogue : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.E))
             {
-                player.movement = false;
-                dialogue_UI.enabled = true;
                 StartCoroutine(dialogHandle());
             }
         }
@@ -69,6 +67,10 @@ public class Dialogue : MonoBehaviour
 
     IEnumerator dialogHandle()
     {
+        Quaternion currentRot = player.transform.rotation;
+        player.transform.rotation = Quaternion.Euler(new Vector3(player.transform.rotation.x, -90, player.transform.rotation.z));
+        player.movement = false;
+        dialogue_UI.enabled = true;
         dialogue_possible = false;
 
         worldText.text = "";
@@ -91,10 +93,12 @@ public class Dialogue : MonoBehaviour
 
         if (!hasTopics)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.1f);
             player.movement = true;
             dialogue_UI.enabled = false;
             dialogue_possible = true;
+            dialogueBox.text = "";
+            player.transform.rotation = currentRot;
             StopCoroutine(dialogHandle());
         }
 
@@ -129,17 +133,18 @@ public class Dialogue : MonoBehaviour
 
     IEnumerator dialogDisplay(string text)
     {
+        //Displays text with a delay between the characters
         Debug.Log(text);
         for (int i = 0; i < text.Length; i++)
         {
             dialogueBox.text += text[i];
 
-            if (i > text.Length / 4)
-                if (Input.GetMouseButton(0))
-                {
-                    dialogueBox.text = text;
-                    break;
-                }
+            if (Input.GetMouseButton(0))
+            {
+                dialogueBox.text = text;
+                break;
+            }
+
             yield return new WaitForSeconds(worddelay);
         }
 
