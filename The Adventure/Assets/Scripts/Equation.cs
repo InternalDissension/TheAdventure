@@ -92,9 +92,16 @@ public class Equation : MonoBehaviour {
         max = 100;
     }
 
-    int randomGenerator(float min, float max)
+    int randomGenerator(float min, float max, float exclude = 10000)
     {
-        return (int)UnityEngine.Random.Range(min, max);
+        int value = (int)exclude;
+
+        while (value == exclude)
+        {
+            value = (int)UnityEngine.Random.Range(min, max);
+        }
+
+        return value;
     }
 
     void solver()
