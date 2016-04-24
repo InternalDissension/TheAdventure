@@ -13,7 +13,7 @@ public class Camera_Class : MonoBehaviour {
     public Movement m;
 
     private Vector3 velocity;
-	// Use this for initialization
+
 	void Start () {
 
         Vector3 target = new Vector3(m.startingPosition.x + xOffset, m.startingPosition.y + yOffset, -zoom);
@@ -21,7 +21,6 @@ public class Camera_Class : MonoBehaviour {
 
     }
 	
-	// Update is called once per frame
 	void FixedUpdate () {
 
         if (m.inscene)

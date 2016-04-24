@@ -1,55 +1,55 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.SceneManagement;
 
 public class Movement : MonoBehaviour {
-    public Vector3 startingPosition;
-    public bool inscene;
 
-    public float speed;                 //speed of movement
+    public Vector3 startingPosition;
+
+    public float speed;                 //movement speed
+    public float moveAtkSpeed;          //movement speed during attacks
     public float jumpHeight;            //height of jump
     public float jumpTime;              //length of time jump takes to complete
     public float gravity;               //gravity influence
     public float dampTime = 0.15f;
 
-    public float speedeffect;           //power of super speed
-    public float sloweffect;            //power of time control
+    public float speedEffect;           //power of super speed
+    public float speedDuration;         //length of super speed
+    private bool speedEffectActive;     //is superspeed being used?
 
-    public float speedduration;         //length of super speed
-    public float slowduration;          //length of time control
+    public float speedCoolDuration;     //speed cool down length
+    public float teleportCoolDuration;  //teleport cool down length
 
-    public float speedcoolduration;     //speed cool down length
-    public float slowcoolduration;      //slow cool down length
-    public float teleportcoolduration;  //teleport cool down length
-
-
-    bool forward;       //moving right
-    bool backward;      //moving left
-    bool jump;          //jumping
-    bool crouch;        //crouching
-    bool grounded;      //on ground
-    bool jumping;       //jumping
-    bool attacking;     //attacking
-
-    public bool movement;      //can the player move
-
-    bool superspeed;    //super speed activation
-    bool slow;          //time control activation
-    bool teleport;      //teleport activation
-    bool speedcool;     //speed cooldown
-    bool slowcool;      //slow cooldown
-    bool teleportcool;  //teleport cooldown
-
-    Animator anim;      //Control animator component
-    public Item sword;  //Get sword on player
+    private float movespeed;            //current speed used
+    internal static float power;        //strength of powers
 
     //Movement
-    bool moving;                    //is the player moving?
-    public float startTransition;
-    public float endTransistion;    
-    Vector3 moveVec;                //Tracks amount of movement
-    float move = 0.0f;
+    public bool movement;               //can the player move?
+    private bool forward;               //move right key
+    private bool backward;              //move left key
+    private bool jump;                  //jump key
+    private bool crouch;                //crouch key
+
+    private bool grounded;              //is the player on ground?
+    private bool jumping;               //is the player jumping?
+    private bool attacking;             //is the player attacking?
+    private bool moving;                //is the player moving?
+
+    public float startTransition;       //curve from idle to running
+    public float endTransistion;        //curve from running to idle
+    private float move = 0.0f;          //where we are on the curve
+    private Vector3 moveVec;            //the actual movement
+
+    private bool superspeed;            //super speed key
+    private bool teleport;              //teleport key
+    private bool speedcool;             //speed cooldown
+    private bool teleportcool;          //teleport cooldown
+
+    internal static bool action;        //determines if w is an action or jump
+    internal bool inscene;              //used for cinematic pauses
+
+    Animator anim;                      //Control animator component
+    public Item sword;                  //Get sword on player
 
     Ray rray;
     Ray lray;
@@ -60,7 +60,15 @@ public class Movement : MonoBehaviour {
         grounded = false;    //player starts grounded
         jumping = false;    //player isn't jumping
         anim = GetComponentInChildren<Animator>();
-        MoveOntoScene();
+
+        if (SceneManagement.GetActiveLevel() == "Level I")
+            MoveOntoScene();
+        else
+        {
+            movement = true;
+            inscene = true;
+            move = 0;
+        }
 
     }
 
@@ -73,34 +81,30 @@ public class Movement : MonoBehaviour {
 
         if (movement)
         {
-            jump = Input.GetKeyDown(KeyCode.W);             //Is jump key being pressed
-            crouch = Input.GetKey(KeyCode.S);               //Is crouch key being pressed
-            forward = Input.GetKey(KeyCode.D);              //Is forward key being pressed
-            backward = Input.GetKey(KeyCode.A);            //Is back key being pressed
-            superspeed = Input.GetKeyDown(KeyCode.Alpha1);  //Is super speed power button being pressed
-            slow = Input.GetKeyDown(KeyCode.Alpha2);        //Is time control power button being pressed
-            teleport = Input.GetKeyDown(KeyCode.Alpha3);    //Is teleport power button being pressed
-            attacking = Input.GetMouseButton(0);
+            jump = Input.GetKeyDown(KeyCode.W);     //Is jump key being pressed
+            crouch = Input.GetKey(KeyCode.S);       //Is crouch key being pressed
+            forward = Input.GetKey(KeyCode.D);      //Is forward key being pressed
+            backward = Input.GetKey(KeyCode.A);     //Is back key being pressed
+
+            superspeed = Input.GetKey(KeyCode.Q) && Input.GetMouseButton(0);    //Is super speed power button being pressed
+            teleport = Input.GetKey(KeyCode.Q) && Input.GetMouseButton(1);      //Is teleport power button being pressed
+            attacking = Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Q);    //Is attack key being pressed
         }
 
         if (forward)
         {
             move += startTransition * Time.deltaTime;
-            move = Mathf.Clamp(move, 0, speed * Time.deltaTime);
+            move = Mathf.Clamp(move, 0, movespeed * Time.deltaTime);
 
-            moveVec = (Vector3.right * move);
             transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, 0, transform.rotation.eulerAngles.z);
-            //transform.position += moveVec;
         }
 
         else if (backward)
         {
             move -= startTransition * Time.deltaTime;
-            move = Mathf.Clamp(move, -speed * Time.deltaTime, 0);
+            move = Mathf.Clamp(move, -movespeed * Time.deltaTime, 0);
 
-            //moveVec = (Vector3.left * move);
             transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, 180, transform.rotation.eulerAngles.z);
-            //transform.position -= moveVec;
         }
 
         else
@@ -152,12 +156,14 @@ public class Movement : MonoBehaviour {
 
         if (attacking)
         {
+            movespeed = moveAtkSpeed;
             sword.attacking = true;
         }
 
-        else
+        else if (!speedEffectActive)
         {
             sword.attacking = false;
+            movespeed = speed;
         }
 
         if (movement)
@@ -166,9 +172,8 @@ public class Movement : MonoBehaviour {
             SetBoolAnimation("attacking", attacking);
         }
 
-        if (jump && !jumping)
+        if (jump && !jumping && !action)
         {
-            Debug.Log("jumping");
             jumping = true;
             StartCoroutine(Jumping());
         }
@@ -184,7 +189,7 @@ public class Movement : MonoBehaviour {
             StartCoroutine(Teleport());
         }
 
-        if (superspeed)
+        if (superspeed && !speedcool)
         {
             StartCoroutine(Dash());
         }
@@ -212,13 +217,13 @@ public class Movement : MonoBehaviour {
         while (covered < distance)
         {
             Debug.Log("Inside while");
-            moveVec = Vector3.right * speed * Time.deltaTime;
+            moveVec = Vector3.right * movespeed * Time.deltaTime;
             transform.position += moveVec;
             covered = Mathf.Abs(startPos.x - transform.position.x);
             Debug.Log(covered);
             yield return new WaitForFixedUpdate();
         }
-        move = speed * Time.deltaTime;
+        move = movespeed * Time.deltaTime;
         SetBoolAnimation("running", false);   
         yield return new WaitForSeconds(1.2f);
         movement = true;
@@ -246,13 +251,21 @@ public class Movement : MonoBehaviour {
 
     IEnumerator Dash()
     {
-        float tempspeed = speed;
+        speedEffectActive = true;
+        speedcool = true;
+        float tempspeed = movespeed;
+        anim.SetBool("superspeed", true);
+        sword.attacking = false;
+        movespeed *= speedEffect;
+        move = movespeed;
+        yield return new WaitForSeconds(speedDuration);
+        anim.SetBool("superspeed", false);
 
-        speed *= speedeffect;
-
-        yield return new WaitForSeconds(speedduration);
-
-        speed = tempspeed;
+        movespeed = tempspeed;
+        move = tempspeed;
+        speedEffectActive = false;
+        yield return new WaitForSeconds(speedCoolDuration);
+        speedcool = false;
         
     }
 
@@ -261,7 +274,7 @@ public class Movement : MonoBehaviour {
         teleportcool = true;
         Ray pos = Camera.main.ScreenPointToRay(Input.mousePosition);
         transform.position = new Vector3(pos.origin.x, pos.origin.y, 0);
-        yield return new WaitForSeconds(teleportcoolduration);
+        yield return new WaitForSeconds(teleportCoolDuration);
         teleportcool = false;
         
 
