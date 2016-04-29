@@ -23,9 +23,16 @@ public class Camera_Class : MonoBehaviour {
 	
 	void FixedUpdate () {
 
-        if (m.inscene)
+        if (Movement.inscene)
         {
             Vector3 target = new Vector3(player.position.x + xOffset, player.position.y + yOffset, -zoom);
+
+
+            if (player.transform.rotation == Quaternion.Euler(new Vector3(0, 180, 0)))
+            {
+                target = new Vector3(player.position.x - xOffset, player.position.y + yOffset, -zoom);
+            }
+
             transform.position = Vector3.SmoothDamp(transform.position, target, ref velocity, dampTime);
         }
 

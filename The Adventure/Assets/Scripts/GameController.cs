@@ -5,29 +5,53 @@ using System.Collections.Generic;
 
 public class GameController : MonoBehaviour {
 
-    public GameObject player;
-    Animator anim;
-	// Use this for initialization
-	void Start () {
+    public Transform player;
 
-        anim = player.GetComponent<Animator>();
-
-        if (SceneManager.GetActiveScene().name == "Level I")
-        {
-
-        }
-
-    }
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-    void MoveOntoScene()
+    [System.Serializable]
+    public class EnemyController
     {
-        //Moves the player into view at the start of the game
-        
+        public string Name = "Enemy";
 
+        public GameObject enemy;
+        public Transform spawnLocation;
+        public Transform triggerLocation;
+    }
+
+    public List<EnemyController> enemies;
+    private bool[] casting;
+
+
+    void Start()
+    {
+        casting = new bool[enemies.Count];
+
+        for (int i = 0; i < casting.Length; i++)
+        {
+            casting[i] = true;
+        }
+    }
+
+    void LateUpdate()
+    {
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            if (player.transform.position.x > enemies[i].triggerLocation.position.x && casting[i])
+            {
+                Debug.Log("got it down");
+                SpawnEnemy(enemies[i].enemy, enemies[i].spawnLocation, i);
+                casting[i] = false;
+            }
+        }
+    }
+
+    void SpawnEnemy(GameObject enemy, Transform position, int enemynum)
+    {
+        GameObject child = Instantiate(enemy);
+        child.name = "Enemy " + enemynum;
+        child.transform.position = position.position;
+        child.transform.rotation = Quaternion.Euler(0,-90,0);
+        child.GetComponent<Character>().player = GameObject.Find("Player").GetComponent<Movement>();
+
+        child.transform.parent = GameObject.Find("Enemies").transform;
     }
 }

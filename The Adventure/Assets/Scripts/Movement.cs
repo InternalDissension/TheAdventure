@@ -12,6 +12,8 @@ public class Movement : MonoBehaviour {
     public float jumpTime;              //length of time jump takes to complete
     public float gravity;               //gravity influence
     public float dampTime = 0.15f;
+    public float attackDistance;
+    internal bool damage;
 
     public float speedEffect;           //power of super speed
     public float speedDuration;         //length of super speed
@@ -32,7 +34,7 @@ public class Movement : MonoBehaviour {
 
     private bool grounded;              //is the player on ground?
     private bool jumping;               //is the player jumping?
-    private bool attacking;             //is the player attacking?
+    internal bool attacking;            //is the player attacking?
     private bool moving;                //is the player moving?
 
     public float startTransition;       //curve from idle to running
@@ -46,14 +48,20 @@ public class Movement : MonoBehaviour {
     private bool teleportcool;          //teleport cooldown
 
     internal static bool action;        //determines if w is an action or jump
-    internal bool inscene;              //used for cinematic pauses
+    internal static bool inscene;       //used for cinematic pauses
 
     Animator anim;                      //Control animator component
     public Item sword;                  //Get sword on player
 
     Ray rray;
     Ray lray;
+    Ray enemyRay;
     RaycastHit rayhit;
+
+    void OnAwake()
+    {
+        DontDestroyOnLoad(this.gameObject);
+    }
 
     // Use this for initialization
     void Start () {
@@ -128,15 +136,12 @@ public class Movement : MonoBehaviour {
         Vector3 newPosition = transform.position + moveVec;
 
         rray.origin = lray.origin = transform.position + Vector3.up;
+
         lray.direction = Vector3.left;
         rray.direction = Vector3.right;
 
-        Debug.DrawRay(lray.origin, lray.direction, Color.cyan);
-        Debug.DrawRay(rray.origin, rray.direction, Color.white);
-
         if (Physics.Raycast(lray, out rayhit, 3.0f, 1 << 9))
         {
-            Debug.Log("lray " + rayhit.collider.gameObject.name);
             if (rayhit.distance <= 0.2f)
             {
                 if (moveVec.x < 0)
@@ -144,12 +149,29 @@ public class Movement : MonoBehaviour {
             }
         }
 
-        if (Physics.Raycast(rray, out rayhit, 1.0f, 1 << 9))
+        if (Physics.Raycast(rray, out rayhit, 3.0f, 1 << 9))
         {
-            Debug.Log("rray " + rayhit.collider.gameObject.name + rayhit.distance);
             if (rayhit.distance <= 0.2f)
                 if (moveVec.x > 0)
                     newPosition = transform.position;
+        }
+
+        if (Physics.Raycast(lray, out rayhit, attackDistance, 1 << 11) || Physics.Raycast(rray, out rayhit, attackDistance, 1 << 11))
+        {
+            if (rayhit.distance <= attackDistance && !Character.hit)
+            {
+                damage = true;
+            }
+
+            else
+            {
+                damage = false;
+            }
+
+            if (rayhit.distance < 1)
+            {
+                //take damage
+            }
         }
 
         transform.position = newPosition;
@@ -210,17 +232,14 @@ public class Movement : MonoBehaviour {
         //yield return new WaitForFixedUpdate();
         SetBoolAnimation("running", true);
         Vector3 startPos = transform.position;
-        Debug.Log(startPos);
         float distance = Mathf.Abs(startingPosition.x - transform.position.x);
-        Debug.Log(distance);
         float covered = 0.0f;
         while (covered < distance)
         {
-            Debug.Log("Inside while");
             moveVec = Vector3.right * movespeed * Time.deltaTime;
             transform.position += moveVec;
             covered = Mathf.Abs(startPos.x - transform.position.x);
-            Debug.Log(covered);
+
             yield return new WaitForFixedUpdate();
         }
         move = movespeed * Time.deltaTime;
@@ -273,7 +292,7 @@ public class Movement : MonoBehaviour {
     {
         teleportcool = true;
         Ray pos = Camera.main.ScreenPointToRay(Input.mousePosition);
-        transform.position = new Vector3(pos.origin.x, pos.origin.y, 0);
+        transform.position = new Vector3(pos.origin.x, transform.position.y + 0.3f, transform.position.z);
         yield return new WaitForSeconds(teleportCoolDuration);
         teleportcool = false;
         

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEditor;
 using System.Collections;
 
 public class ChallengeHandler : MonoBehaviour {
@@ -13,7 +12,7 @@ public class ChallengeHandler : MonoBehaviour {
         {
             if (Input.GetKeyDown(KeyCode.W))
             {
-                if (scene != 0)
+                if (scene != -1)
                 {
                     SceneManagement.ActivateLevel(scene);
                 }
@@ -28,7 +27,6 @@ public class ChallengeHandler : MonoBehaviour {
 
     void OnTriggerEnter()
     {
-        Debug.Log("Entered");
         active = true;
         Movement.action = true;
     }
